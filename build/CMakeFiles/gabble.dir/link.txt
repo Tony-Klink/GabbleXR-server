@@ -1,0 +1,1 @@
+/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ -Wl,--dependency-file=CMakeFiles/gabble.dir/link.d CMakeFiles/gabble.dir/main.cpp.o -o gabble  -lopenxr_loader -llo

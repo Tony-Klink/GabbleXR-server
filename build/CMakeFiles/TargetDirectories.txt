@@ -1,0 +1,3 @@
+/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles/gabble.dir
+/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles/edit_cache.dir
+/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles/rebuild_cache.dir
