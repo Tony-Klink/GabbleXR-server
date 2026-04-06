@@ -20,99 +20,79 @@ PFN_xrConvertTimespecTimeToTimeKHR xrConvertTimespecTimeToTimeKHR_ptr = nullptr;
 
 #define CHK_XR(res) if (res != XR_SUCCESS) { std::cerr << "OpenXR Error: " << res << " at " << __LINE__ << std::endl; return 1; }
 
-void send_v2_parameters(lo_address addr, float* p) {
-    // Eye Gaze
-    lo_send(addr, "/v2/EyeLeftX", "f", p[18] - p[16]); // Right - Left
-    lo_send(addr, "/v2/EyeLeftY", "f", p[20] - p[14]); // Up - Down
-    lo_send(addr, "/v2/EyeRightX", "f", p[19] - p[17]);
-    lo_send(addr, "/v2/EyeRightY", "f", p[21] - p[15]);
+const char* babbleNames[] = {
+    "cheekPuffLeft", "cheekPuffRight", "cheekSuckLeft", "cheekSuckRight",
+    "jawOpen", "jawForward", "jawLeft", "jawRight",
+    "noseSneerLeft", "noseSneerRight", "mouthFunnel", "mouthPucker",
+    "mouthLeft", "mouthRight", "mouthRollUpper", "mouthRollLower",
+    "mouthShrugUpper", "mouthShrugLower", "mouthClose", "mouthSmileLeft",
+    "mouthSmileRight", "mouthFrownLeft", "mouthFrownRight", "mouthDimpleLeft",
+    "mouthDimpleRight", "mouthUpperUpLeft", "mouthUpperUpRight", "mouthLowerDownLeft",
+    "mouthLowerDownRight", "mouthPressLeft", "mouthPressRight", "mouthStretchLeft",
+    "mouthStretchRight", "tongueOut", "tongueUp", "tongueDown",
+    "tongueLeft", "tongueRight", "tongueRoll", "tongueBendDown",
+    "tongueCurlUp", "tongueSquish", "tongueFlat", "tongueTwistLeft",
+    "tongueTwistRight"
+};
 
-    // Eye Lids (VRCFT: 0 closed, 0.75 open, 1.0 widen)
-    // Android: EyesClosed is 1.0 at closed. UpperLidRaiser is 1.0 at widen.
-    float lidL = (1.0f - p[12]) * 0.75f + p[59] * 0.25f;
-    float lidR = (1.0f - p[13]) * 0.75f + p[60] * 0.25f;
-    lo_send(addr, "/v2/EyeLidLeft", "f", lidL);
-    lo_send(addr, "/v2/EyeLidRight", "f", lidR);
+void send_babble_parameters(lo_address addr, float* p) {
+    float b[45];
+    memset(b, 0, sizeof(b));
 
-    // Eye Squint
-    lo_send(addr, "/v2/EyeSquintLeft", "f", p[28]);
-    lo_send(addr, "/v2/EyeSquintRight", "f", p[29]);
+    // Mapping from XR_ANDROID_face_tracking (p) to Babble (b)
+    b[0] = p[2];  // cheekPuffLeft
+    b[1] = p[3];  // cheekPuffRight
+    b[2] = p[6];  // cheekSuckLeft
+    b[3] = p[7];  // cheekSuckRight
+    b[4] = p[24]; // jawOpen
+    b[5] = p[27]; // jawForward (Thrust)
+    b[6] = p[25]; // jawLeft
+    b[7] = p[26]; // jawRight
+    b[8] = p[55]; // noseSneerLeft
+    b[9] = p[56]; // noseSneerRight
+    b[10] = (p[34] + p[35] + p[36] + p[37]) / 4.0f; // mouthFunnel
+    b[11] = (p[40] + p[41]) / 2.0f;                 // mouthPucker
+    b[12] = p[53]; // mouthLeft
+    b[13] = p[54]; // mouthRight
+    b[14] = (p[45] + p[47]) / 2.0f;                 // mouthRollUpper (Suck)
+    b[15] = (p[44] + p[46]) / 2.0f;                 // mouthRollLower (Suck)
+    b[16] = p[9];  // mouthShrugUpper (Chin Raiser Top)
+    b[17] = p[8];  // mouthShrugLower (Chin Raiser Bottom)
+    b[18] = p[50]; // mouthClose
+    b[19] = p[32]; // mouthSmileLeft (Corner Puller)
+    b[20] = p[33]; // mouthSmileRight (Corner Puller)
+    b[21] = p[30]; // mouthFrownLeft (Corner Depressor)
+    b[22] = p[31]; // mouthFrownRight (Corner Depressor)
+    b[23] = p[10]; // mouthDimpleLeft
+    b[24] = p[11]; // mouthDimpleRight
+    b[25] = p[61]; // mouthUpperUpLeft (Raiser)
+    b[26] = p[62]; // mouthUpperUpRight (Raiser)
+    b[27] = p[51]; // mouthLowerDownLeft (Depressor)
+    b[28] = p[52]; // mouthLowerDownRight (Depressor)
+    b[29] = p[38]; // mouthPressLeft
+    b[30] = p[39]; // mouthPressRight
+    b[31] = p[42]; // mouthStretchLeft
+    b[32] = p[43]; // mouthStretchRight
+    b[33] = p[63]; // tongueOut
+    b[34] = p[66]; // tongueUp
+    b[35] = p[67]; // tongueDown
+    b[36] = p[64]; // tongueLeft
+    b[37] = p[65]; // tongueRight
+    // 38-44 (tongueRoll, bend, curl, squish, flat, twists) - Android doesn't have these specifically
 
-    // Brow
-    lo_send(addr, "/v2/BrowInnerUpLeft", "f", p[22]);
-    lo_send(addr, "/v2/BrowInnerUpRight", "f", p[23]);
-    lo_send(addr, "/v2/BrowOuterUpLeft", "f", p[57]);
-    lo_send(addr, "/v2/BrowOuterUpRight", "f", p[58]);
-    lo_send(addr, "/v2/BrowLowererLeft", "f", p[0]);
-    lo_send(addr, "/v2/BrowLowererRight", "f", p[1]);
-
-    // Jaw
-    lo_send(addr, "/v2/JawOpen", "f", p[24]);
-    lo_send(addr, "/v2/JawX", "f", p[26] - p[25]); // Right - Left
-    lo_send(addr, "/v2/JawZ", "f", p[27]);
-
-    // Mouth
-    lo_send(addr, "/v2/MouthUpperUpLeft", "f", p[61]);
-    lo_send(addr, "/v2/MouthUpperUpRight", "f", p[62]);
-    lo_send(addr, "/v2/MouthLowerDownLeft", "f", p[51]);
-    lo_send(addr, "/v2/MouthLowerDownRight", "f", p[52]);
-    lo_send(addr, "/v2/MouthCornerPullLeft", "f", p[32]);
-    lo_send(addr, "/v2/MouthCornerPullRight", "f", p[33]);
-    lo_send(addr, "/v2/MouthFrownLeft", "f", p[30]);
-    lo_send(addr, "/v2/MouthFrownRight", "f", p[31]);
-    lo_send(addr, "/v2/MouthStretchLeft", "f", p[42]);
-    lo_send(addr, "/v2/MouthStretchRight", "f", p[43]);
-    lo_send(addr, "/v2/MouthDimpleLeft", "f", p[10]);
-    lo_send(addr, "/v2/MouthDimpleRight", "f", p[11]);
-    lo_send(addr, "/v2/MouthPressLeft", "f", p[38]);
-    lo_send(addr, "/v2/MouthPressRight", "f", p[39]);
-    lo_send(addr, "/v2/MouthTightenerLeft", "f", p[48]);
-    lo_send(addr, "/v2/MouthTightenerRight", "f", p[49]);
-    lo_send(addr, "/v2/MouthClosed", "f", p[50]);
-
-    // Lip
-    lo_send(addr, "/v2/LipPuckerUpperLeft", "f", p[40]);
-    lo_send(addr, "/v2/LipPuckerUpperRight", "f", p[41]);
-    lo_send(addr, "/v2/LipPuckerLowerLeft", "f", p[40]); // Android doesn't distinguish upper/lower pucker?
-    lo_send(addr, "/v2/LipPuckerLowerRight", "f", p[41]);
-    
-    lo_send(addr, "/v2/LipFunnelUpperLeft", "f", p[35]);
-    lo_send(addr, "/v2/LipFunnelUpperRight", "f", p[37]);
-    lo_send(addr, "/v2/LipFunnelLowerLeft", "f", p[34]);
-    lo_send(addr, "/v2/LipFunnelLowerRight", "f", p[36]);
-
-    lo_send(addr, "/v2/LipSuckUpperLeft", "f", p[45]);
-    lo_send(addr, "/v2/LipSuckUpperRight", "f", p[47]);
-    lo_send(addr, "/v2/LipSuckLowerLeft", "f", p[44]);
-    lo_send(addr, "/v2/LipSuckLowerRight", "f", p[46]);
-
-    // Cheek
-    // CheekPuffSuck: Puff (0 to 1) / Suck (0 to -1)
-    lo_send(addr, "/v2/CheekPuffSuckLeft", "f", p[2] - p[6]);
-    lo_send(addr, "/v2/CheekPuffSuckRight", "f", p[3] - p[7]);
-    lo_send(addr, "/v2/CheekSquintLeft", "f", p[4]);
-    lo_send(addr, "/v2/CheekSquintRight", "f", p[5]);
-
-    // Tongue
-    lo_send(addr, "/v2/TongueOut", "f", p[63]);
-    lo_send(addr, "/v2/TongueX", "f", p[65] - p[64]); // Right - Left
-    lo_send(addr, "/v2/TongueY", "f", p[66] - p[67]); // Up - Down
-
-    // Tracking status
-    lo_send(addr, "/v2/EyeTrackingActive", "i", 1);
-    lo_send(addr, "/v2/LipTrackingActive", "i", 1);
-    lo_send(addr, "/v2/ExpressionTrackingActive", "i", 1);
+    for (int i = 0; i < 45; ++i) {
+        std::string path = "/" + std::string(babbleNames[i]);
+        lo_send(addr, path.c_str(), "f", b[i]);
+    }
 }
 
 int main() {
-    // Initialize OSC
     lo_address resoniteAddr = lo_address_new("127.0.0.1", "8888");
     if (!resoniteAddr) {
         std::cerr << "Failed to initialize OSC address" << std::endl;
         return 1;
     }
 
-    // 1. Get extensions
     uint32_t extCount = 0;
     xrEnumerateInstanceExtensionProperties(nullptr, 0, &extCount, nullptr);
     std::vector<XrExtensionProperties> extensions(extCount, {XR_TYPE_EXTENSION_PROPERTIES});
@@ -136,7 +116,6 @@ int main() {
         }
     }
 
-    // 2. Create Instance
     XrInstanceCreateInfo createInfo{XR_TYPE_INSTANCE_CREATE_INFO};
     strncpy(createInfo.applicationInfo.applicationName, "Gabble", XR_MAX_APPLICATION_NAME_SIZE);
     createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
@@ -146,7 +125,6 @@ int main() {
     XrInstance instance;
     CHK_XR(xrCreateInstance(&createInfo, &instance));
 
-    // Load function pointers
     if (faceTrackingSupported) {
         xrGetInstanceProcAddr(instance, "xrCreateFaceTrackerANDROID", (PFN_xrVoidFunction*)&xrCreateFaceTrackerANDROID_ptr);
         xrGetInstanceProcAddr(instance, "xrDestroyFaceTrackerANDROID", (PFN_xrVoidFunction*)&xrDestroyFaceTrackerANDROID_ptr);
@@ -156,32 +134,27 @@ int main() {
         xrGetInstanceProcAddr(instance, "xrConvertTimespecTimeToTimeKHR", (PFN_xrVoidFunction*)&xrConvertTimespecTimeToTimeKHR_ptr);
     }
 
-    // 3. Get System
     XrSystemGetInfo systemInfo{XR_TYPE_SYSTEM_GET_INFO};
     systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
     XrSystemId systemId;
     CHK_XR(xrGetSystem(instance, &systemInfo, &systemId));
 
-    // 4. Create Session
     XrSessionCreateInfo sessionCreateInfo{XR_TYPE_SESSION_CREATE_INFO};
     sessionCreateInfo.systemId = systemId;
     XrSession session;
     CHK_XR(xrCreateSession(instance, &sessionCreateInfo, &session));
 
-    // 5. Create Face Tracker
     XrFaceTrackerANDROID faceTracker = XR_NULL_HANDLE;
     if (faceTrackingSupported && xrCreateFaceTrackerANDROID_ptr) {
         XrFaceTrackerCreateInfoANDROID faceTrackerCreateInfo{XR_TYPE_FACE_TRACKER_CREATE_INFO_ANDROID};
         CHK_XR(xrCreateFaceTrackerANDROID_ptr(session, &faceTrackerCreateInfo, &faceTracker));
     }
 
-    // 6. Begin Session
     XrSessionBeginInfo beginInfo{XR_TYPE_SESSION_BEGIN_INFO};
     beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
     CHK_XR(xrBeginSession(session, &beginInfo));
-    std::cout << "Broadcasting VRCFT Unified Expressions (v2) to Resonite (127.0.0.1:8888)..." << std::endl;
+    std::cout << "Broadcasting Babble OSC to Resonite (127.0.0.1:8888)..." << std::endl;
 
-    // 7. Event/Frame Loop
     bool running = true;
     while (running) {
         XrEventDataBuffer event{XR_TYPE_EVENT_DATA_BUFFER};
@@ -207,7 +180,6 @@ int main() {
         if (faceTracker != XR_NULL_HANDLE && xrGetFaceStateANDROID_ptr && xrTime != 0) {
             float parameters[XR_FACE_PARAMETER_COUNT_ANDROID];
             float regionConfidences[XR_FACE_REGION_CONFIDENCE_COUNT_ANDROID];
-            
             XrFaceStateANDROID faceState{XR_TYPE_FACE_STATE_ANDROID};
             faceState.parametersCapacityInput = XR_FACE_PARAMETER_COUNT_ANDROID;
             faceState.parameters = parameters;
@@ -219,8 +191,8 @@ int main() {
 
             XrResult res = xrGetFaceStateANDROID_ptr(faceTracker, &getInfo, &faceState);
             if (res == XR_SUCCESS && faceState.isValid) {
-                send_v2_parameters(resoniteAddr, parameters);
-                std::cout << "\r[OSC Sent] JawOpen: " << std::fixed << std::setprecision(2) << parameters[24] << "    " << std::flush;
+                send_babble_parameters(resoniteAddr, parameters);
+                std::cout << "\r[Babble Sent] JawOpen: " << std::fixed << std::setprecision(2) << parameters[24] << "    " << std::flush;
             }
         }
 
@@ -228,7 +200,6 @@ int main() {
         nanosleep(&ts, NULL);
     }
 
-    // Cleanup
     if (faceTracker != XR_NULL_HANDLE) xrDestroyFaceTrackerANDROID_ptr(faceTracker);
     xrEndSession(session);
     xrDestroySession(session);
