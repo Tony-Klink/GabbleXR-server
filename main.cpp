@@ -20,70 +20,90 @@ PFN_xrConvertTimespecTimeToTimeKHR xrConvertTimespecTimeToTimeKHR_ptr = nullptr;
 
 #define CHK_XR(res) if (res != XR_SUCCESS) { std::cerr << "OpenXR Error: " << res << " at " << __LINE__ << std::endl; return 1; }
 
-const char* babbleNames[] = {
-    "cheekPuffLeft", "cheekPuffRight", "cheekSuckLeft", "cheekSuckRight",
-    "jawOpen", "jawForward", "jawLeft", "jawRight",
-    "noseSneerLeft", "noseSneerRight", "mouthFunnel", "mouthPucker",
-    "mouthLeft", "mouthRight", "mouthRollUpper", "mouthRollLower",
-    "mouthShrugUpper", "mouthShrugLower", "mouthClose", "mouthSmileLeft",
-    "mouthSmileRight", "mouthFrownLeft", "mouthFrownRight", "mouthDimpleLeft",
-    "mouthDimpleRight", "mouthUpperUpLeft", "mouthUpperUpRight", "mouthLowerDownLeft",
-    "mouthLowerDownRight", "mouthPressLeft", "mouthPressRight", "mouthStretchLeft",
-    "mouthStretchRight", "tongueOut", "tongueUp", "tongueDown",
-    "tongueLeft", "tongueRight", "tongueRoll", "tongueBendDown",
-    "tongueCurlUp", "tongueSquish", "tongueFlat", "tongueTwistLeft",
-    "tongueTwistRight"
-};
+void send_osc_data(lo_address addr, float* p) {
+    // 1. Babble Expressions (Raw)
+    lo_send(addr, "/cheekPuffLeft", "f", p[2]);
+    lo_send(addr, "/cheekPuffRight", "f", p[3]);
+    lo_send(addr, "/cheekSuckLeft", "f", p[6]);
+    lo_send(addr, "/cheekSuckRight", "f", p[7]);
+    lo_send(addr, "/jawOpen", "f", p[24]);
+    lo_send(addr, "/jawForward", "f", p[27]);
+    lo_send(addr, "/jawLeft", "f", p[25]);
+    lo_send(addr, "/jawRight", "f", p[26]);
+    lo_send(addr, "/noseSneerLeft", "f", p[55]);
+    lo_send(addr, "/noseSneerRight", "f", p[56]);
+    lo_send(addr, "/mouthFunnel", "f", (p[34] + p[35] + p[36] + p[37]) / 4.0f);
+    lo_send(addr, "/mouthPucker", "f", (p[40] + p[41]) / 2.0f);
+    lo_send(addr, "/mouthLeft", "f", p[53]);
+    lo_send(addr, "/mouthRight", "f", p[54]);
+    lo_send(addr, "/mouthRollUpper", "f", (p[45] + p[47]) / 2.0f);
+    lo_send(addr, "/mouthRollLower", "f", (p[44] + p[46]) / 2.0f);
+    lo_send(addr, "/mouthShrugUpper", "f", p[9]);
+    lo_send(addr, "/mouthShrugLower", "f", p[8]);
+    lo_send(addr, "/mouthClose", "f", p[50]);
+    lo_send(addr, "/mouthSmileLeft", "f", p[32]);
+    lo_send(addr, "/mouthSmileRight", "f", p[33]);
+    lo_send(addr, "/mouthFrownLeft", "f", p[30]);
+    lo_send(addr, "/mouthFrownRight", "f", p[31]);
+    lo_send(addr, "/mouthDimpleLeft", "f", p[10]);
+    lo_send(addr, "/mouthDimpleRight", "f", p[11]);
+    lo_send(addr, "/mouthUpperUpLeft", "f", p[61]);
+    lo_send(addr, "/mouthUpperUpRight", "f", p[62]);
+    lo_send(addr, "/mouthLowerDownLeft", "f", p[51]);
+    lo_send(addr, "/mouthLowerDownRight", "f", p[52]);
+    lo_send(addr, "/mouthStretchLeft", "f", p[42]);
+    lo_send(addr, "/mouthStretchRight", "f", p[43]);
+    lo_send(addr, "/tongueOut", "f", p[63]);
+    lo_send(addr, "/tongueUp", "f", p[66]);
+    lo_send(addr, "/tongueDown", "f", p[67]);
+    lo_send(addr, "/tongueLeft", "f", p[64]);
+    lo_send(addr, "/tongueRight", "f", p[65]);
+    // Tongue roll/bend/etc (Android N/A)
+    lo_send(addr, "/tongueRoll", "f", 0.0f);
+    lo_send(addr, "/tongueBendDown", "f", 0.0f);
+    lo_send(addr, "/tongueCurlUp", "f", 0.0f);
+    lo_send(addr, "/tongueSquish", "f", 0.0f);
+    lo_send(addr, "/tongueFlat", "f", 0.0f);
+    lo_send(addr, "/tongueTwistLeft", "f", 0.0f);
+    lo_send(addr, "/tongueTwistRight", "f", 0.0f);
+    lo_send(addr, "/mouthPressLeft", "f", p[38]);
+    lo_send(addr, "/mouthPressRight", "f", p[39]);
 
-void send_babble_parameters(lo_address addr, float* p) {
-    float b[45];
-    memset(b, 0, sizeof(b));
+    // 2. Eye Gaze & Lids
+    // LeftEyeX/RightEyeX: Right - Left
+    float eyeLX = p[18] - p[16];
+    float eyeRX = p[19] - p[17];
+    float eyeLY = p[20] - p[14];
+    float eyeRY = p[21] - p[15];
+    float eyeY = (eyeLY + eyeRY) / 2.0f;
 
-    // Mapping from XR_ANDROID_face_tracking (p) to Babble (b)
-    b[0] = p[2];  // cheekPuffLeft
-    b[1] = p[3];  // cheekPuffRight
-    b[2] = p[6];  // cheekSuckLeft
-    b[3] = p[7];  // cheekSuckRight
-    b[4] = p[24]; // jawOpen
-    b[5] = p[27]; // jawForward (Thrust)
-    b[6] = p[25]; // jawLeft
-    b[7] = p[26]; // jawRight
-    b[8] = p[55]; // noseSneerLeft
-    b[9] = p[56]; // noseSneerRight
-    b[10] = (p[34] + p[35] + p[36] + p[37]) / 4.0f; // mouthFunnel
-    b[11] = (p[40] + p[41]) / 2.0f;                 // mouthPucker
-    b[12] = p[53]; // mouthLeft
-    b[13] = p[54]; // mouthRight
-    b[14] = (p[45] + p[47]) / 2.0f;                 // mouthRollUpper (Suck)
-    b[15] = (p[44] + p[46]) / 2.0f;                 // mouthRollLower (Suck)
-    b[16] = p[9];  // mouthShrugUpper (Chin Raiser Top)
-    b[17] = p[8];  // mouthShrugLower (Chin Raiser Bottom)
-    b[18] = p[50]; // mouthClose
-    b[19] = p[32]; // mouthSmileLeft (Corner Puller)
-    b[20] = p[33]; // mouthSmileRight (Corner Puller)
-    b[21] = p[30]; // mouthFrownLeft (Corner Depressor)
-    b[22] = p[31]; // mouthFrownRight (Corner Depressor)
-    b[23] = p[10]; // mouthDimpleLeft
-    b[24] = p[11]; // mouthDimpleRight
-    b[25] = p[61]; // mouthUpperUpLeft (Raiser)
-    b[26] = p[62]; // mouthUpperUpRight (Raiser)
-    b[27] = p[51]; // mouthLowerDownLeft (Depressor)
-    b[28] = p[52]; // mouthLowerDownRight (Depressor)
-    b[29] = p[38]; // mouthPressLeft
-    b[30] = p[39]; // mouthPressRight
-    b[31] = p[42]; // mouthStretchLeft
-    b[32] = p[43]; // mouthStretchRight
-    b[33] = p[63]; // tongueOut
-    b[34] = p[66]; // tongueUp
-    b[35] = p[67]; // tongueDown
-    b[36] = p[64]; // tongueLeft
-    b[37] = p[65]; // tongueRight
-    // 38-44 (tongueRoll, bend, curl, squish, flat, twists) - Android doesn't have these specifically
+    // Lids: 1.0 is open, 0.0 is closed. Android: Closed=1.0.
+    float lidL = 1.0f - p[12] + p[59];
+    float lidR = 1.0f - p[13] + p[60];
 
-    for (int i = 0; i < 45; ++i) {
-        std::string path = "/" + std::string(babbleNames[i]);
-        lo_send(addr, path.c_str(), "f", b[i]);
-    }
+    lo_send(addr, "/LeftEyeX", "f", eyeLX * 10.0);
+    lo_send(addr, "/RightEyeX", "f", eyeRX * 10.0);
+    lo_send(addr, "/EyesY", "f", eyeY * 10.0);
+    lo_send(addr, "/LeftEyeLid", "f", lidL * 10.0);
+    lo_send(addr, "/RightEyeLid", "f", lidR * 10.0);
+
+    // std::cout << "Eye data:\n";
+    // std::cout << "LeftEyeX: " << eyeLX * 10.0 << "\n" <<
+    // "RightEyeX: " << eyeRX * 10.0 <<"\n" <<
+    // "EyesY: " << eyeY * 10.0 <<"\n" <<
+    // "LeftEyeLid: " << lidL * 10.0 << "\n" <<
+    // "RightEyeLid: " << lidR * 10.0 << "\n";
+
+    // V2 Eye Parameters
+    // lo_send(addr, "/v2/EyeLeftX", "f", eyeLX);
+    // lo_send(addr, "/v2/EyeRightX", "f", eyeRX);
+    // lo_send(addr, "/v2/EyeLeftY", "f", eyeLY);
+    
+    // // V2 Lids: 0.75 is standard open.
+    // float v2LidL = (1.0f - p[12]) * 0.75f + p[59] * 0.25f;
+    // float v2LidR = (1.0f - p[13]) * 0.75f + p[60] * 0.25f;
+    // lo_send(addr, "/v2/EyeLidLeft", "f", v2LidL);
+    // lo_send(addr, "/v2/EyeLidRight", "f", v2LidR);
 }
 
 int main() {
@@ -153,7 +173,7 @@ int main() {
     XrSessionBeginInfo beginInfo{XR_TYPE_SESSION_BEGIN_INFO};
     beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
     CHK_XR(xrBeginSession(session, &beginInfo));
-    std::cout << "Broadcasting Babble OSC to Resonite (127.0.0.1:8888)..." << std::endl;
+    std::cout << "Broadcasting Babble + Eye OSC to Resonite (127.0.0.1:8888)..." << std::endl;
 
     bool running = true;
     while (running) {
@@ -191,12 +211,12 @@ int main() {
 
             XrResult res = xrGetFaceStateANDROID_ptr(faceTracker, &getInfo, &faceState);
             if (res == XR_SUCCESS && faceState.isValid) {
-                send_babble_parameters(resoniteAddr, parameters);
-                std::cout << "\r[Babble Sent] JawOpen: " << std::fixed << std::setprecision(2) << parameters[24] << "    " << std::flush;
+                send_osc_data(resoniteAddr, parameters);
+                std::cout << "\r[OSC] Data sent to 8888.    " << std::flush;
             }
         }
 
-        struct timespec ts = {0, 10000000}; // 10ms (100Hz)
+        struct timespec ts = {0, 10000000}; // 10ms
         nanosleep(&ts, NULL);
     }
 
