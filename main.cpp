@@ -3,7 +3,10 @@
 #include <string.h>
 #include <ctime>
 #include <iomanip>
+#include <print>
+#include <chrono>
 #include <lo/lo.h>
+#include "FTUtils.h"
 
 #define XR_USE_PLATFORM_LINUX 1
 #define XR_USE_TIMESPEC 1
@@ -20,94 +23,139 @@ PFN_xrConvertTimespecTimeToTimeKHR xrConvertTimespecTimeToTimeKHR_ptr = nullptr;
 
 #define CHK_XR(res) if (res != XR_SUCCESS) { std::cerr << "OpenXR Error: " << res << " at " << __LINE__ << std::endl; return 1; }
 
-void send_osc_data(lo_address addr, float* p) {
-    // 1. Babble Expressions (Raw)
-    lo_send(addr, "/cheekPuffLeft", "f", p[2]);
-    lo_send(addr, "/cheekPuffRight", "f", p[3]);
-    lo_send(addr, "/cheekSuckLeft", "f", p[6]);
-    lo_send(addr, "/cheekSuckRight", "f", p[7]);
-    lo_send(addr, "/jawOpen", "f", p[24]);
-    lo_send(addr, "/jawForward", "f", p[27]);
-    lo_send(addr, "/jawLeft", "f", p[25]);
-    lo_send(addr, "/jawRight", "f", p[26]);
-    lo_send(addr, "/noseSneerLeft", "f", p[55]);
-    lo_send(addr, "/noseSneerRight", "f", p[56]);
-    lo_send(addr, "/mouthFunnel", "f", (p[34] + p[35] + p[36] + p[37]) / 4.0f);
-    lo_send(addr, "/mouthPucker", "f", (p[40] + p[41]) / 2.0f);
-    lo_send(addr, "/mouthLeft", "f", p[53]);
-    lo_send(addr, "/mouthRight", "f", p[54]);
-    lo_send(addr, "/mouthRollUpper", "f", (p[45] + p[47]) / 2.0f);
-    lo_send(addr, "/mouthRollLower", "f", (p[44] + p[46]) / 2.0f);
-    lo_send(addr, "/mouthShrugUpper", "f", p[9]);
-    lo_send(addr, "/mouthShrugLower", "f", p[8]);
-    lo_send(addr, "/mouthClose", "f", p[50]);
-    lo_send(addr, "/mouthSmileLeft", "f", p[32]);
-    lo_send(addr, "/mouthSmileRight", "f", p[33]);
-    lo_send(addr, "/mouthFrownLeft", "f", p[30]);
-    lo_send(addr, "/mouthFrownRight", "f", p[31]);
-    lo_send(addr, "/mouthDimpleLeft", "f", p[10]);
-    lo_send(addr, "/mouthDimpleRight", "f", p[11]);
-    lo_send(addr, "/mouthUpperUpLeft", "f", p[61]);
-    lo_send(addr, "/mouthUpperUpRight", "f", p[62]);
-    lo_send(addr, "/mouthLowerDownLeft", "f", p[51]);
-    lo_send(addr, "/mouthLowerDownRight", "f", p[52]);
-    lo_send(addr, "/mouthStretchLeft", "f", p[42]);
-    lo_send(addr, "/mouthStretchRight", "f", p[43]);
-    lo_send(addr, "/tongueOut", "f", p[63]);
-    lo_send(addr, "/tongueUp", "f", p[66]);
-    lo_send(addr, "/tongueDown", "f", p[67]);
-    lo_send(addr, "/tongueLeft", "f", p[64]);
-    lo_send(addr, "/tongueRight", "f", p[65]);
-    // Tongue roll/bend/etc (Android N/A)
-    lo_send(addr, "/tongueRoll", "f", 0.0f);
-    lo_send(addr, "/tongueBendDown", "f", 0.0f);
-    lo_send(addr, "/tongueCurlUp", "f", 0.0f);
-    lo_send(addr, "/tongueSquish", "f", 0.0f);
-    lo_send(addr, "/tongueFlat", "f", 0.0f);
-    lo_send(addr, "/tongueTwistLeft", "f", 0.0f);
-    lo_send(addr, "/tongueTwistRight", "f", 0.0f);
-    lo_send(addr, "/mouthPressLeft", "f", p[38]);
-    lo_send(addr, "/mouthPressRight", "f", p[39]);
+void send_osc_data(lo_address addr, std::span<UnifiedExpressionShape> unifiedExpressions) {
+    static auto last_log_time = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+    bool should_log = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_log_time).count() >= 100;
 
-    // 2. Eye Gaze & Lids
-    // LeftEyeX/RightEyeX: Right - Left
-    float eyeLX = p[18] - p[16];
-    float eyeRX = p[19] - p[17];
-    float eyeLY = p[20] - p[14];
-    float eyeRY = p[21] - p[15];
-    float eyeY = (eyeLY + eyeRY) / 2.0f;
+    auto send_f = [&](const char* path, float val) {
+        lo_send(addr, path, "f", val);
+        if (should_log) std::cout << path << ": " << std::setw(6) << val << " | ";
+    };
 
-    // Lids: 1.0 is open, 0.0 is closed. Android: Closed=1.0.
-    float lidL = 1.0f - p[12] + p[59];
-    float lidR = 1.0f - p[13] + p[60];
+    auto send_fff = [&](const char* path, float x, float y, float z) {
+        lo_send(addr, path, "fff", x, y, z);
+        if (should_log) std::cout << path << ": (" << x << "," << y << "," << z << ") | ";
+    };
 
-    lo_send(addr, "/LeftEyeX", "f", eyeLX * 10.0);
-    lo_send(addr, "/RightEyeX", "f", eyeRX * 10.0);
-    lo_send(addr, "/EyesY", "f", eyeY * 10.0);
-    lo_send(addr, "/LeftEyeLid", "f", lidL * 10.0);
-    lo_send(addr, "/RightEyeLid", "f", lidR * 10.0);
+    if (should_log) {
+        std::cout << "\033[H\033[J"; // Clear screen and home cursor
+        std::cout << "--- OSC Parameters ---" << std::endl;
+        std::cout << std::fixed << std::setprecision(3);
+    }
 
-    // std::cout << "Eye data:\n";
-    // std::cout << "LeftEyeX: " << eyeLX * 10.0 << "\n" <<
-    // "RightEyeX: " << eyeRX * 10.0 <<"\n" <<
-    // "EyesY: " << eyeY * 10.0 <<"\n" <<
-    // "LeftEyeLid: " << lidL * 10.0 << "\n" <<
-    // "RightEyeLid: " << lidR * 10.0 << "\n";
+    // 1. Mouth Properties
+    float mouth_jaw_x = unifiedExpressions[(uint32_t)UnifiedExpressions::JawRight].weight - unifiedExpressions[(uint32_t)UnifiedExpressions::JawLeft].weight;
+    float mouth_jaw_z = unifiedExpressions[(uint32_t)UnifiedExpressions::JawForward].weight;
+    float mouth_jaw_open = unifiedExpressions[(uint32_t)UnifiedExpressions::JawOpen].weight;
+    send_fff("/mouth/Jaw", mouth_jaw_x, 0.0f, mouth_jaw_z);
+    send_f("/mouth/JawOpen", mouth_jaw_open);
+    if (should_log) std::cout << std::endl;
 
-    // V2 Eye Parameters
-    // lo_send(addr, "/v2/EyeLeftX", "f", eyeLX);
-    // lo_send(addr, "/v2/EyeRightX", "f", eyeRX);
-    // lo_send(addr, "/v2/EyeLeftY", "f", eyeLY);
+    float tongue_x = unifiedExpressions[(uint32_t)UnifiedExpressions::TongueRight].weight - unifiedExpressions[(uint32_t)UnifiedExpressions::TongueLeft].weight;
+    float tongue_y = unifiedExpressions[(uint32_t)UnifiedExpressions::TongueUp].weight - unifiedExpressions[(uint32_t)UnifiedExpressions::TongueDown].weight;
+    float tongue_z = unifiedExpressions[(uint32_t)UnifiedExpressions::TongueOut].weight;
+    send_fff("/mouth/Tongue", tongue_x, tongue_y, tongue_z);
+    send_f("/mouth/TongueRoll", 0.0f);
+    if (should_log) std::cout << std::endl;
     
-    // // V2 Lids: 0.75 is standard open.
-    // float v2LidL = (1.0f - p[12]) * 0.75f + p[59] * 0.25f;
-    // float v2LidR = (1.0f - p[13]) * 0.75f + p[60] * 0.25f;
-    // lo_send(addr, "/v2/EyeLidLeft", "f", v2LidL);
-    // lo_send(addr, "/v2/EyeLidRight", "f", v2LidR);
+    send_f("/mouth/LipUpperLeftRaise", unifiedExpressions[(uint32_t)UnifiedExpressions::MouthUpperUpLeft].weight);
+    send_f("/mouth/LipUpperRightRaise", unifiedExpressions[(uint32_t)UnifiedExpressions::MouthUpperUpRight].weight);
+    send_f("/mouth/LipLowerLeftRaise", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LOWER_LIP_DEPRESSOR_L_ANDROID]);
+    send_f("/mouth/LipLowerRightRaise", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LOWER_LIP_DEPRESSOR_R_ANDROID]);
+    if (should_log) std::cout << std::endl;
+
+    // float mouth_h = unifiedExpressions[XR_FACE_PARAMETER_INDICES_MOUTH_RIGHT_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_MOUTH_LEFT_ANDROID];
+    // send_f("/mouth/LipUpperHorizontal", mouth_h);
+    // send_f("/mouth/LipLowerHorizontal", mouth_h);
+    // send_f("/mouth/MouthLeftSmileFrown", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_CORNER_PULLER_L_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_CORNER_DEPRESSOR_L_ANDROID]);
+    // send_f("/mouth/MouthRightSmileFrown", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_CORNER_PULLER_R_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_CORNER_DEPRESSOR_R_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // send_f("/mouth/MouthLeftDimple", unifiedExpressions[XR_FACE_PARAMETER_INDICES_DIMPLER_L_ANDROID]);
+    // send_f("/mouth/MouthRightDimple", unifiedExpressions[XR_FACE_PARAMETER_INDICES_DIMPLER_R_ANDROID]);
+    // send_f("/mouth/MouthPoutLeft", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_PUCKER_L_ANDROID]);
+    // send_f("/mouth/MouthPoutRight", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_PUCKER_R_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // send_f("/mouth/LipTopLeftOverturn", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_FUNNELER_LT_ANDROID]);
+    // send_f("/mouth/LipTopRightOverturn", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_FUNNELER_RT_ANDROID]);
+    // send_f("/mouth/LipBottomLeftOverturn", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_FUNNELER_LB_ANDROID]);
+    // send_f("/mouth/LipBottomRightOverturn", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_FUNNELER_RB_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // send_f("/mouth/LipTopLeftOverUnder", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_SUCK_LT_ANDROID]);
+    // send_f("/mouth/LipTopRightOverUnder", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_SUCK_RT_ANDROID]);
+    // send_f("/mouth/LipBottomLeftOverUnder", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_SUCK_LB_ANDROID]);
+    // send_f("/mouth/LipBottomRightOverUnder", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_SUCK_RB_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // send_f("/mouth/LipLeftStretchTighten", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_STRETCHER_L_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_TIGHTENER_L_ANDROID]);
+    // send_f("/mouth/LipRightStretchTighten", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_STRETCHER_R_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_TIGHTENER_R_ANDROID]);
+    // send_f("/mouth/LipsLeftPress", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_PRESSOR_L_ANDROID]);
+    // send_f("/mouth/LipsRightPress", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LIP_PRESSOR_R_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // send_f("/mouth/CheekLeftPuffSuck", unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHEEK_PUFF_L_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHEEK_SUCK_L_ANDROID]);
+    // send_f("/mouth/CheekRightPuffSuck", unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHEEK_PUFF_R_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHEEK_SUCK_R_ANDROID]);
+    // send_f("/mouth/CheekLeftRaise", unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHEEK_RAISER_L_ANDROID]);
+    // send_f("/mouth/CheekRightRaise", unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHEEK_RAISER_R_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // send_f("/mouth/NoseWrinkleLeft", unifiedExpressions[XR_FACE_PARAMETER_INDICES_NOSE_WRINKLER_L_ANDROID]);
+    // send_f("/mouth/NoseWrinkleRight", unifiedExpressions[XR_FACE_PARAMETER_INDICES_NOSE_WRINKLER_R_ANDROID]);
+    // send_f("/mouth/ChinRaiseBottom", unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHIN_RAISER_B_ANDROID]);
+    // send_f("/mouth/ChinRaiseTop", unifiedExpressions[XR_FACE_PARAMETER_INDICES_CHIN_RAISER_T_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // // 2. Eye Properties
+    // // Left Eye
+    // float eye_l_dir_x = unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_RIGHT_L_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_LEFT_L_ANDROID];
+    // float eye_l_dir_y = unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_UP_L_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_DOWN_L_ANDROID];
+    // auto eye_l_gaze = FTUtils::MakeEye(
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_LEFT_L_ANDROID],
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_RIGHT_L_ANDROID],
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_UP_L_ANDROID],
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_DOWN_L_ANDROID]
+    // );
+    // send_fff("/eye/Left/Direction", eye_l_gaze[0], eye_l_gaze[1], 0.0f);
+    // send_f("/eye/Left/Openness", 1.0f - unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_CLOSED_L_ANDROID]);
+    // send_f("/eye/Left/Widen", unifiedExpressions[XR_FACE_PARAMETER_INDICES_UPPER_LID_RAISER_L_ANDROID]);
+    // send_f("/eye/Left/Frown", unifiedExpressions[XR_FACE_PARAMETER_INDICES_BROW_LOWERER_L_ANDROID]);
+    // send_f("/eye/Left/Squeeze", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LID_TIGHTENER_L_ANDROID]);
+    // send_f("/eye/Left/InnerBrowVertical", unifiedExpressions[XR_FACE_PARAMETER_INDICES_INNER_BROW_RAISER_L_ANDROID]);
+    // send_f("/eye/Left/OuterBrowVertical", unifiedExpressions[XR_FACE_PARAMETER_INDICES_OUTER_BROW_RAISER_L_ANDROID]);
+    // if (should_log) std::cout << std::endl;
+
+    // // Right Eye
+    // float eye_r_dir_x = unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_RIGHT_R_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_LEFT_R_ANDROID];
+    // float eye_r_dir_y = unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_UP_R_ANDROID] - unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_DOWN_R_ANDROID];
+    // auto eye_r_gaze = FTUtils::MakeEye(
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_LEFT_R_ANDROID],
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_RIGHT_R_ANDROID],
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_UP_R_ANDROID],
+    //     unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_LOOK_DOWN_R_ANDROID]
+    // );
+    // send_fff("/eye/Right/Direction", eye_r_gaze[0], eye_r_gaze[1], 0.0f);
+    // send_f("/eye/Right/Openness", 1.0f - unifiedExpressions[XR_FACE_PARAMETER_INDICES_EYES_CLOSED_R_ANDROID]);
+    // send_f("/eye/Right/Widen", unifiedExpressions[XR_FACE_PARAMETER_INDICES_UPPER_LID_RAISER_R_ANDROID]);
+    // send_f("/eye/Right/Frown", unifiedExpressions[XR_FACE_PARAMETER_INDICES_BROW_LOWERER_R_ANDROID]);
+    // send_f("/eye/Right/Squeeze", unifiedExpressions[XR_FACE_PARAMETER_INDICES_LID_TIGHTENER_R_ANDROID]);
+    // send_f("/eye/Right/InnerBrowVertical", unifiedExpressions[XR_FACE_PARAMETER_INDICES_INNER_BROW_RAISER_R_ANDROID]);
+    // send_f("/eye/Right/OuterBrowVertical", unifiedExpressions[XR_FACE_PARAMETER_INDICES_OUTER_BROW_RAISER_R_ANDROID]);
+    
+    // if (should_log) {
+    //     std::cout << std::endl << std::flush;
+    //     last_log_time = now;
+    // }
 }
 
 int main() {
-    lo_address resoniteAddr = lo_address_new("127.0.0.1", "8888");
+    {
+        std::print(stdout, "HELLO EASY PRINT\n");
+    }
+    
+    lo_address resoniteAddr = lo_address_new("127.0.0.1", "9000");
     if (!resoniteAddr) {
         std::cerr << "Failed to initialize OSC address" << std::endl;
         return 1;
@@ -173,7 +221,11 @@ int main() {
     XrSessionBeginInfo beginInfo{XR_TYPE_SESSION_BEGIN_INFO};
     beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
     CHK_XR(xrBeginSession(session, &beginInfo));
-    std::cout << "Broadcasting Babble + Eye OSC to Resonite (127.0.0.1:8888)..." << std::endl;
+    std::cout << "Broadcasting Babble + Eye OSC to Resonite (127.0.0.1:9000)..." << std::endl;
+
+    // Init UExpressions
+    std::array<UnifiedExpressionShape, static_cast<size_t>(UnifiedExpressions::Max)> unifiedExpressionsBuf;
+    std::span<UnifiedExpressionShape> unifiedExpressions{unifiedExpressionsBuf};
 
     bool running = true;
     while (running) {
@@ -211,8 +263,12 @@ int main() {
 
             XrResult res = xrGetFaceStateANDROID_ptr(faceTracker, &getInfo, &faceState);
             if (res == XR_SUCCESS && faceState.isValid) {
-                send_osc_data(resoniteAddr, parameters);
-                std::cout << "\r[OSC] Data sent to 8888.    " << std::flush;
+                // Update UnifiedExpressions buffer
+                UpdateEyeExpressionsANDROID(unifiedExpressions, parameters);
+                UpdateMouthExpressionsANDROID(unifiedExpressions, parameters);
+
+                // Send to socket
+                send_osc_data(resoniteAddr, unifiedExpressions);
             }
         }
 
