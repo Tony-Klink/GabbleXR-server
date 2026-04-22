@@ -53,10 +53,10 @@ nix develop --command bash -c "mkdir -p build && cd build && cmake .. && make"
     ```bash
     ./build/gabble
     ```
+3.  **Configure**
+    The server creates config file at $HOME/.config/gabble/sensitivity.ini
+    You can play around with those values
 
-3.  **Resonite Setup**:
-    Ensure Resonite is listening for OSC data on port `8888`. The tracking data will be automatically mapped if you have a compatible Babble or VRCFT-ready avatar.
+4.  **Resonite Setup**:
+    Ensure Resonite is listening for OSC data on port `9000`. The tracking data will be automatically mapped if you have a compatible Babble or VRCFT-ready avatar.
 
-## License
-
-MIT (or check individual source files for specifics)

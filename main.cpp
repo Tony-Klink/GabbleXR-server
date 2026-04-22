@@ -151,8 +151,9 @@ void send_osc_data(lo_address addr, std::span<UnifiedExpressionShape> unifiedExp
 }
 
 int main() {
+    FTUtils::LoadSensitivity();
     {
-        std::print(stdout, "HELLO EASY PRINT\n");
+        std::print(stdout, "Gabble started...\n");
     }
     
     lo_address resoniteAddr = lo_address_new("127.0.0.1", "9000");

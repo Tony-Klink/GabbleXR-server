@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <span>
 #include <vector>
+#include <string>
 #include "OneEuroFilter.h"
 #include <openxr/openxr.h>
 
@@ -13,6 +14,8 @@ class FTUtils
 public:
     FTUtils();
     ~FTUtils();
+
+    static void LoadSensitivity();
 
     static std::array<float, 2> MakeEye(float LookLeft, float LookRight, float LookUp, float LookDown)
     {
@@ -202,7 +205,7 @@ struct TrackingSensitivity
     float EyeRightOpenness = 1.0f;
 };
 
-static TrackingSensitivity sensitivity;
+inline TrackingSensitivity sensitivity;
 
 /**
  * @brief Updates unified expressions based on Android input.
