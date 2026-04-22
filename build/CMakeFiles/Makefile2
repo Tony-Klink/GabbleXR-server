@@ -85,12 +85,12 @@ clean: CMakeFiles/gabble.dir/clean
 CMakeFiles/gabble.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/gabble.dir/build.make CMakeFiles/gabble.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/gabble.dir/build.make CMakeFiles/gabble.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=1,2 "Built target gabble"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=1,2,3,4,5 "Built target gabble"
 .PHONY : CMakeFiles/gabble.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/gabble.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles 5
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/gabble.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles 0
 .PHONY : CMakeFiles/gabble.dir/rule
@@ -102,7 +102,7 @@ gabble: CMakeFiles/gabble.dir/rule
 # codegen rule for target.
 CMakeFiles/gabble.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/gabble.dir/build.make CMakeFiles/gabble.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=1,2 "Finished codegen for target gabble"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=1,2,3,4,5 "Finished codegen for target gabble"
 .PHONY : CMakeFiles/gabble.dir/codegen
 
 # clean rule for target.

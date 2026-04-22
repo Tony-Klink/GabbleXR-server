@@ -86,18 +86,66 @@ CMakeFiles/gabble.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/gabble.dir/main.cpp.s"
 	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/klink/Documents/Projects/cpp/gabble/main.cpp -o CMakeFiles/gabble.dir/main.cpp.s
 
+CMakeFiles/gabble.dir/FTUtils.cpp.o: CMakeFiles/gabble.dir/flags.make
+CMakeFiles/gabble.dir/FTUtils.cpp.o: /home/klink/Documents/Projects/cpp/gabble/FTUtils.cpp
+CMakeFiles/gabble.dir/FTUtils.cpp.o: CMakeFiles/gabble.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/gabble.dir/FTUtils.cpp.o"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/gabble.dir/FTUtils.cpp.o -MF CMakeFiles/gabble.dir/FTUtils.cpp.o.d -o CMakeFiles/gabble.dir/FTUtils.cpp.o -c /home/klink/Documents/Projects/cpp/gabble/FTUtils.cpp
+
+CMakeFiles/gabble.dir/FTUtils.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/gabble.dir/FTUtils.cpp.i"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/klink/Documents/Projects/cpp/gabble/FTUtils.cpp > CMakeFiles/gabble.dir/FTUtils.cpp.i
+
+CMakeFiles/gabble.dir/FTUtils.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/gabble.dir/FTUtils.cpp.s"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/klink/Documents/Projects/cpp/gabble/FTUtils.cpp -o CMakeFiles/gabble.dir/FTUtils.cpp.s
+
+CMakeFiles/gabble.dir/OneEuroFilter.cpp.o: CMakeFiles/gabble.dir/flags.make
+CMakeFiles/gabble.dir/OneEuroFilter.cpp.o: /home/klink/Documents/Projects/cpp/gabble/OneEuroFilter.cpp
+CMakeFiles/gabble.dir/OneEuroFilter.cpp.o: CMakeFiles/gabble.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/gabble.dir/OneEuroFilter.cpp.o"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/gabble.dir/OneEuroFilter.cpp.o -MF CMakeFiles/gabble.dir/OneEuroFilter.cpp.o.d -o CMakeFiles/gabble.dir/OneEuroFilter.cpp.o -c /home/klink/Documents/Projects/cpp/gabble/OneEuroFilter.cpp
+
+CMakeFiles/gabble.dir/OneEuroFilter.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/gabble.dir/OneEuroFilter.cpp.i"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/klink/Documents/Projects/cpp/gabble/OneEuroFilter.cpp > CMakeFiles/gabble.dir/OneEuroFilter.cpp.i
+
+CMakeFiles/gabble.dir/OneEuroFilter.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/gabble.dir/OneEuroFilter.cpp.s"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/klink/Documents/Projects/cpp/gabble/OneEuroFilter.cpp -o CMakeFiles/gabble.dir/OneEuroFilter.cpp.s
+
+CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o: CMakeFiles/gabble.dir/flags.make
+CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o: /home/klink/Documents/Projects/cpp/gabble/UEExpressionDriver.cpp
+CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o: CMakeFiles/gabble.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o -MF CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o.d -o CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o -c /home/klink/Documents/Projects/cpp/gabble/UEExpressionDriver.cpp
+
+CMakeFiles/gabble.dir/UEExpressionDriver.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/gabble.dir/UEExpressionDriver.cpp.i"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/klink/Documents/Projects/cpp/gabble/UEExpressionDriver.cpp > CMakeFiles/gabble.dir/UEExpressionDriver.cpp.i
+
+CMakeFiles/gabble.dir/UEExpressionDriver.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/gabble.dir/UEExpressionDriver.cpp.s"
+	/nix/store/hb2bs5fg5wkm04x565737qd5nh2hy5nk-gcc-wrapper-15.2.0/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/klink/Documents/Projects/cpp/gabble/UEExpressionDriver.cpp -o CMakeFiles/gabble.dir/UEExpressionDriver.cpp.s
+
 # Object files for target gabble
 gabble_OBJECTS = \
-"CMakeFiles/gabble.dir/main.cpp.o"
+"CMakeFiles/gabble.dir/main.cpp.o" \
+"CMakeFiles/gabble.dir/FTUtils.cpp.o" \
+"CMakeFiles/gabble.dir/OneEuroFilter.cpp.o" \
+"CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o"
 
 # External object files for target gabble
 gabble_EXTERNAL_OBJECTS =
 
 gabble: CMakeFiles/gabble.dir/main.cpp.o
+gabble: CMakeFiles/gabble.dir/FTUtils.cpp.o
+gabble: CMakeFiles/gabble.dir/OneEuroFilter.cpp.o
+gabble: CMakeFiles/gabble.dir/UEExpressionDriver.cpp.o
 gabble: CMakeFiles/gabble.dir/build.make
 gabble: CMakeFiles/gabble.dir/compiler_depend.ts
 gabble: CMakeFiles/gabble.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable gabble"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/klink/Documents/Projects/cpp/gabble/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable gabble"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/gabble.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

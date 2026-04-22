@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/nix/store/95c51hqg5n0qrnwyy3k1gj7ldhbw9dpv-liblo-0.32/include
 
-CXX_FLAGS = -std=gnu++17
+CXX_FLAGS = -g -std=gnu++26
 
