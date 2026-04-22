@@ -1,15 +1,14 @@
 # Gabble
 
-Gabble is a C++ OpenXR client designed to bridge **XR_ANDROID_face_tracking** data from a WiVRn runtime to **Resonite** (or other OSC-compatible applications) using the Project Babble and VRCFT Unified Expressions (v2) protocols.
+Gabble is a C++ OpenXR client designed to bridge **XR_ANDROID_face_tracking** data from a WiVRn runtime to **Resonite** (or other OSC-compatible applications) using the VRCFT Unified Expressions (v2) protocols.
 
 ## Features
 
 - **WiVRn Compatibility**: Connects to the WiVRn OpenXR runtime.
 - **Face Tracking**: Implements the `XR_ANDROID_face_tracking` extension to read high-fidelity facial parameters.
-- **OSC Broadcasting**: Sends tracking data to `127.0.0.1:8888` at 100Hz.
+- **OSC Broadcasting**: Sends tracking data to `127.0.0.1:9000` at 100Hz.
 - **Protocols Supported**:
-  - **Project Babble**: Raw expression paths (e.g., `/cheekPuffLeft`, `/jawOpen`).
-  - **VRCFT Unified Expressions (v2)**: Standardized avatar parameters (e.g., `/avatar/parameters/v2/EyeLidLeft`).
+  - **VRCFT Unified Expressions (v2)**: Standardized avatar parameters mapped to Resonite properties
   - **Eye Tracking**: Includes eye gaze (X/Y) and eyelid openness mapping.
 - **Headless Mode**: Uses `XR_MND_headless` to run without requiring a VR display window on the host.
 
