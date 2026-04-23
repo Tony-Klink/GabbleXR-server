@@ -11,3 +11,5 @@ pkg_check_modules(LIBLO REQUIRED liblo)
 add_executable(gabble main.cpp FTUtils.cpp OneEuroFilter.cpp UEExpressionDriver.cpp)
 target_link_libraries(gabble PRIVATE ${OPENXR_LIBRARIES} ${LIBLO_LIBRARIES})
 target_include_directories(gabble PRIVATE ${OPENXR_INCLUDE_DIRS} ${LIBLO_INCLUDE_DIRS})
+
+install(TARGETS gabble DESTINATION bin)

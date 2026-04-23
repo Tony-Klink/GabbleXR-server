@@ -17,6 +17,9 @@ Gabble is a C++ OpenXR client designed to bridge **XR_ANDROID_face_tracking** da
 - **Nix**: With Flakes and `nix-command` enabled.
 - **WiVRn**: Ensure the WiVRn server is running and accessible.
 
+## Installation
+ - include this repo into your nix flake.
+
 ## Building
 
 The project uses a Nix flake to manage its environment and dependencies.
